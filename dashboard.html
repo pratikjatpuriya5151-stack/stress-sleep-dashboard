@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case 5: Stress Levels ↔ Sleep Quality — Evidence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  .viz-root{
+    color-scheme:light;
+    --page:#f4f3f0; --surface-1:#fcfcfb; --surface-2:#f0efec; --grid:#e3e2de;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7974;
+    --border:#e3e2de;
+    --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --accent-wash:rgba(42,120,214,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])) .viz-root{
+      color-scheme:dark;
+      --page:#111110; --surface-1:#1a1a19; --surface-2:#262624; --grid:#33332f;
+      --text-primary:#f0efec; --text-secondary:#c3c2b7; --text-muted:#8e8d86;
+      --border:#33332f;
+      --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+      --accent-wash:rgba(57,135,229,.12);
+    }
+  }
+  :root[data-theme="dark"] .viz-root{
+    color-scheme:dark;
+    --page:#111110; --surface-1:#1a1a19; --surface-2:#262624; --grid:#33332f;
+    --text-primary:#f0efec; --text-secondary:#c3c2b7; --text-muted:#8e8d86;
+    --border:#33332f;
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+    --accent-wash:rgba(57,135,229,.12);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+  .viz-root{background:var(--page);color:var(--text-primary);min-height:100vh;padding:28px 20px 48px;font-size:14px;line-height:1.5}
+  .wrap{max-width:1120px;margin:0 auto}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+  h1{font-size:26px;line-height:1.2;margin:4px 0 6px;font-weight:700}
+  .sub{color:var(--text-secondary);margin:0;max-width:720px}
+  .author{font-size:13px;color:var(--text-muted);margin-top:6px}
+  .theme-btn{background:var(--surface-1);border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+  h2{font-size:16px;margin:0 0 4px;font-weight:600}
+  .section-sub{color:var(--text-secondary);font-size:13px;margin:0 0 14px}
+  section{margin-top:28px}
+  .card{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media (max-width:860px){.grid3,.grid4{grid-template-columns:1fr}}
+  .stat{font-size:32px;font-weight:700;letter-spacing:-.01em;line-height:1.1;font-variant-numeric:tabular-nums}
+  .stat-label{color:var(--text-secondary);font-size:13px;margin-top:4px}
+  .src-name{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+  .rel{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--text-secondary)}
+  .cite{font-size:12px;color:var(--text-muted);margin-top:6px}
+  .total{margin-top:12px;font-size:13px;color:var(--text-secondary)}
+  .total b{color:var(--text-primary)}
+  /* chain */
+  .chain{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
+  .chain .step{flex:1 1 200px;background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .chain .step .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)}
+  .chain .step .v{font-weight:600;margin-top:4px}
+  .chain .step .s{font-size:12px;color:var(--text-muted);margin-top:4px}
+  .arrow{display:flex;align-items:center;color:var(--text-muted);font-size:20px}
+  @media (max-width:860px){.arrow{transform:rotate(90deg);justify-content:center;width:100%}}
+  .loop{margin-top:14px;background:var(--accent-wash);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--text-secondary)}
+  .loop b{color:var(--text-primary)}
+  /* charts */
+  .chart-card h3{font-size:14px;margin:0 0 2px;font-weight:600}
+  .chart-card .q{font-size:12px;color:var(--text-muted);margin-bottom:6px}
+  .answer{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--text-primary);margin-bottom:8px}
+  .answer i{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .chart{width:100%;position:relative}
+  .chart svg{width:100%;height:auto;display:block;overflow:visible}
+  .chart text{font-family:inherit}
+  .takeaway{font-size:13px;color:var(--text-secondary);margin-top:8px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin:2px 0 6px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .tip{position:fixed;pointer-events:none;background:var(--surface-1);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);opacity:0;transition:opacity .1s;max-width:260px;z-index:10}
+  .tip .t{font-weight:600;margin-bottom:2px}
+  .tip .m{color:var(--text-secondary)}
+  .hit{cursor:default}
+  .toggle-table{margin-top:8px;background:none;border:none;color:var(--text-muted);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
+  .mini-table{display:none;width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  .mini-table.show{display:table}
+  .mini-table td,.mini-table th{border-bottom:1px solid var(--border);padding:4px 6px;text-align:left}
+  .mini-table td.n{text-align:right;font-variant-numeric:tabular-nums}
+  /* who */
+  .who{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media (max-width:860px){.who{grid-template-columns:1fr}}
+  .who .card .h{font-weight:600;margin-bottom:4px}
+  .who .card p{margin:0;font-size:13px;color:var(--text-secondary)}
+  /* table */
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .filters label{font-size:12px;color:var(--text-muted)}
+  select,input[type=search]{background:var(--surface-1);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font:inherit;font-size:13px}
+  .tbl-wrap{overflow-x:auto}
+  table.ev{width:100%;border-collapse:collapse;font-size:13px}
+  table.ev th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+  table.ev td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top}
+  table.ev td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;white-space:nowrap}
+  .chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .chip svg{width:12px;height:12px}
+  .count{font-size:12px;color:var(--text-muted);margin-top:8px}
+  /* conclusion */
+  .concl{display:grid;gap:10px}
+  .concl .row{display:grid;grid-template-columns:130px 1fr;gap:14px;align-items:start;background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  @media (max-width:600px){.concl .row{grid-template-columns:1fr}}
+  .concl .row p{margin:0;color:var(--text-secondary)}
+  .bottom{margin-top:14px;font-weight:600;font-size:15px;text-align:center;padding:14px;border-radius:12px;background:var(--accent-wash)}
+  ol.refs{padding-left:20px;margin:0;font-size:12.5px;color:var(--text-secondary)}
+  ol.refs li{margin-bottom:6px}
+  ol.refs a{color:var(--series-1)}
+  footer{margin-top:28px;font-size:12px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+
+<header>
+  <div>
+    <div class="eyebrow">Case study 5 · Stress and lifestyle</div>
+    <h1>Stress Levels ↔ Sleep Quality</h1>
+    <p class="sub">Combined evidence from a German national survey, a meta-analysis and randomised trials. Each source answers one link of the chain from stress to sleep.</p>
+    <div class="author">Pratik Jatpuriya · Development of a Statistical Analysis Concept · Hochschule Fresenius × Kukuk Ingenieurbüro · WS 2026/27</div>
+  </div>
+  <button class="theme-btn" id="themeBtn" type="button">Toggle dark mode</button>
+</header>
+
+<!-- SOURCES -->
+<section>
+  <h2>Sources and participants</h2>
+  <p class="section-sub">Chosen for the largest number of measured data points on stress and sleep.</p>
+  <div class="grid3">
+    <div class="card">
+      <div class="src-name">RKI DEGS1 (Germany)</div>
+      <div class="stat">5,850</div>
+      <div class="stat-label">adults aged 18–64 with chronic stress measured on the TICS-SSCS scale. This is our target market.</div>
+      <div class="rel">Chronic stress ↔ sleep problems, depression, burnout</div>
+      <div class="cite">Hapke et al. (2013)</div>
+    </div>
+    <div class="card">
+      <div class="src-name">Meta-analysis</div>
+      <div class="stat">10,065</div>
+      <div class="stat-label">participants in 25 studies relating perceived stress to sleep quality (PSQI and similar)</div>
+      <div class="rel">Perceived stress ↔ sleep quality / insomnia</div>
+      <div class="cite">Gardani et al. (2022)</div>
+    </div>
+    <div class="card">
+      <div class="src-name">PubMed trials</div>
+      <div class="stat">1,654</div>
+      <div class="stat-label">participants in 18 randomised controlled trials of mindfulness-based stress reduction</div>
+      <div class="rel">Reducing stress ↔ sleep quality</div>
+      <div class="cite">Rusch et al. (2019)</div>
+    </div>
+  </div>
+  <div class="total"><b>17,569 participants</b> with measured data. Supporting studies: a daily study with 326 adults over 2,500+ nights (Yap et al., 2020) and 65 sleep-improvement RCTs with N = 8,608 (Scott et al., 2021).</div>
+</section>
+
+<!-- CHAIN -->
+<section>
+  <h2>The evidence chain</h2>
+  <p class="section-sub">No single source measures the whole chain. Each answers one link.</p>
+  <div class="chain">
+    <div class="step"><div class="k">A · Factor</div><div class="v">High chronic or daily stress</div><div class="s">TICS-SSCS, Perceived Stress Scale, daily 0–10 ratings</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="k">B · Measurable change</div><div class="v">Bedtime arousal and worry, shorter sleep</div><div class="s">Total sleep time, sleep onset latency, wake after sleep onset</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="k">C · Outcome</div><div class="v">Poorer sleep quality and insomnia symptoms</div><div class="s">PSQI, insomnia scales, self-reported sleep problems</div></div>
+  </div>
+  <div class="loop"><b>It runs both ways.</b> On nights when evening stress was 1 point higher than usual (0–10 scale), people slept about 3 minutes less. Shorter sleep then predicted higher stress the next day (Yap et al., 2020). Improving sleep also lowers stress, with g = 0.42 across 65 RCTs (Scott et al., 2021).</div>
+</section>
+
+<!-- CHARTS -->
+<section>
+  <h2>Three questions, three answers</h2>
+  <p class="section-sub">Hover over any bar or point for details. Each chart has a table view.</p>
+  <div class="grid3">
+    <div class="card chart-card">
+      <h3>A · Are stressed people sleeping worse?</h3>
+      <div class="q">Share of adults with high chronic stress · DEGS1</div>
+      <div class="answer"><i style="background:var(--good)"></i>Yes, about 3× higher</div>
+      <div class="chart" id="chartA"></div>
+      <div class="takeaway">22.1% of adults with sleep problems have high chronic stress, compared with 7.5% of those without.</div>
+      <button class="toggle-table" data-t="tA" type="button">Show table</button>
+      <table class="mini-table" id="tA"></table>
+    </div>
+    <div class="card chart-card">
+      <h3>B · How strong is the link?</h3>
+      <div class="q">Pooled correlation with stress · Gardani et al.</div>
+      <div class="answer"><i style="background:var(--warning)"></i>Moderate</div>
+      <div class="chart" id="chartB"></div>
+      <div class="takeaway">r ≈ 0.4 is a moderate association: clearly real, but stress is only one of several drivers.</div>
+      <button class="toggle-table" data-t="tB" type="button">Show table</button>
+      <table class="mini-table" id="tB"></table>
+    </div>
+    <div class="card chart-card">
+      <h3>C · Does lowering stress improve sleep?</h3>
+      <div class="q">Mindfulness RCTs, effect size with 95% CI · Rusch et al.</div>
+      <div class="answer"><i style="background:var(--serious)"></i>Partly</div>
+      <div class="legend"><span><i style="background:var(--series-1)"></i>vs non-specific control</span><span><i style="background:var(--series-2)"></i>vs active sleep treatment</span></div>
+      <div class="chart" id="chartC"></div>
+      <div class="takeaway">Mindfulness beats general controls but is no better than other active treatments (the CI crosses 0).</div>
+      <button class="toggle-table" data-t="tC" type="button">Show table</button>
+      <table class="mini-table" id="tC"></table>
+    </div>
+  </div>
+</section>
+
+<!-- STRESS PREVALENCE -->
+<section>
+  <h2>How many people start stressed?</h2>
+  <p class="section-sub">Prevalence of high chronic stress in German adults aged 18–64 (TICS-SSCS score ≥ 23, top 10%) · DEGS1, N = 5,793</p>
+  <div class="grid4">
+    <div class="card"><div class="stat">11.0%</div><div class="stat-label">all adults with high chronic stress</div></div>
+    <div class="card"><div class="stat">13.9%</div><div class="stat-label">women</div></div>
+    <div class="card"><div class="stat">8.2%</div><div class="stat-label">men</div></div>
+    <div class="card"><div class="stat">~1 in 3</div><div class="stat-label">adults report problems falling or staying asleep (Schlack et al., 2013)</div></div>
+  </div>
+</section>
+
+<!-- WHO -->
+<section>
+  <h2>Who is this most relevant for?</h2>
+  <div class="who">
+    <div class="card"><div class="h">Highly stressed adults</div><p>Women and people with low social support or lower socioeconomic status carry the most chronic stress in Germany, and this is where sleep problems cluster.</p></div>
+    <div class="card"><div class="h">Short or poor sleepers</div><p>Poor sleep raises next-day stress. For these users, fixing sleep first may lower stress as much as the other way round.</p></div>
+    <div class="card"><div class="h">Already low-stress users</div><p>There is little room for gains from stress training if stress is already low. Look for other sleep drivers such as timing, activity and caffeine.</p></div>
+  </div>
+</section>
+
+<!-- TABLE -->
+<section>
+  <h2>All relationships and evidence ratings</h2>
+  <p class="section-sub">Filter by source or rating. Ratings follow GRADE domains (Guyatt et al., 2008) and are a preliminary project appraisal.</p>
+  <div class="card">
+    <div class="filters">
+      <label for="fSrc">Source</label>
+      <select id="fSrc"><option value="">All sources</option></select>
+      <label for="fRate">Rating</label>
+      <select id="fRate"><option value="">All ratings</option><option>High</option><option>Moderate</option><option>Low</option><option>Caution</option></select>
+      <input type="search" id="fQ" placeholder="Search…" aria-label="Search relationships">
+    </div>
+    <div class="tbl-wrap">
+      <table class="ev">
+        <thead><tr><th>Relationship</th><th>Finding</th><th>Sample</th><th>Design</th><th>Rating</th><th>Source</th></tr></thead>
+        <tbody id="evBody"></tbody>
+      </table>
+    </div>
+    <div class="count" id="evCount"></div>
+  </div>
+</section>
+
+<!-- CONCLUSION -->
+<section>
+  <h2>Conclusion</h2>
+  <div class="concl" id="concl"></div>
+  <div class="bottom">Track stress and sleep together, test which one moves first in each user, and let the data decide.</div>
+</section>
+
+<!-- REFERENCES -->
+<section>
+  <h2>References (Harvard)</h2>
+  <div class="card">
+    <ol class="refs">
+      <li>Gardani, M. et al. (2022) 'A systematic review and meta-analysis of poor sleep, insomnia symptoms and stress in undergraduate students', <i>Sleep Medicine Reviews</i>, 61, 101565. <a href="https://doi.org/10.1016/j.smrv.2021.101565">doi:10.1016/j.smrv.2021.101565</a></li>
+      <li>Guyatt, G.H. et al. (2008) 'GRADE: an emerging consensus on rating quality of evidence and strength of recommendations', <i>BMJ</i>, 336(7650), pp. 924–926.</li>
+      <li>Hapke, U. et al. (2013) 'Chronic stress among adults in Germany: results of the German Health Interview and Examination Survey for Adults (DEGS1)', <i>Bundesgesundheitsblatt</i>, 56(5–6), pp. 749–754. <a href="https://doi.org/10.1007/s00103-013-1690-9">doi:10.1007/s00103-013-1690-9</a></li>
+      <li>National Library of Medicine (2026) <i>PubMed</i>. Available at: <a href="https://pubmed.ncbi.nlm.nih.gov/">https://pubmed.ncbi.nlm.nih.gov/</a> (Accessed: 19 November 2026).</li>
+      <li>Rusch, H.L. et al. (2019) 'The effect of mindfulness meditation on sleep quality: a systematic review and meta-analysis of randomized controlled trials', <i>Annals of the New York Academy of Sciences</i>, 1445(1), pp. 5–16. <a href="https://doi.org/10.1111/nyas.13996">doi:10.1111/nyas.13996</a></li>
+      <li>Schlack, R. et al. (2013) 'Frequency and distribution of sleep problems and insomnia in the adult population in Germany (DEGS1)', <i>Bundesgesundheitsblatt</i>, 56(5–6), pp. 740–748.</li>
+      <li>Scott, A.J. et al. (2021) 'Improving sleep quality leads to better mental health: a meta-analysis of randomised controlled trials', <i>Sleep Medicine Reviews</i>, 60, 101556. <a href="https://doi.org/10.1016/j.smrv.2021.101556">doi:10.1016/j.smrv.2021.101556</a></li>
+      <li>Yap, Y. et al. (2020) 'Bi-directional relations between stress and self-reported and actigraphy-assessed sleep: a daily intensive longitudinal study', <i>Sleep</i>, 43(3), zsz250. <a href="https://doi.org/10.1093/sleep/zsz250">doi:10.1093/sleep/zsz250</a></li>
+    </ol>
+  </div>
+</section>
+
+<footer>DEGS1 and the meta-analysis show associations. The RCTs show the causal effect of stress reduction. Note: "22.1% vs 7.5%" is the share of people with high stress among those with and without sleep problems.</footer>
+
+</div>
+<div class="tip" id="tip"></div>
+</div>
+
+<script>
+(function(){
+  // ---------- theme ----------
+  const root=document.documentElement;
+  document.getElementById('themeBtn').addEventListener('click',()=>{
+    const isDark = root.dataset.theme ? root.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = isDark ? 'light' : 'dark';
+  });
+
+  const NS='http://www.w3.org/2000/svg';
+  const el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+  const tip=document.getElementById('tip');
+  function showTip(evt,title,lines){
+    tip.innerHTML='<div class="t">'+title+'</div>'+lines.map(l=>'<div class="m">'+l+'</div>').join('');
+    tip.style.opacity=1; moveTip(evt);
+  }
+  function moveTip(evt){
+    const x=evt.clientX+14, y=evt.clientY+14;
+    const w=tip.offsetWidth, h=tip.offsetHeight;
+    tip.style.left=Math.min(x, innerWidth-w-8)+'px';
+    tip.style.top=Math.min(y, innerHeight-h-8)+'px';
+  }
+  function hideTip(){tip.style.opacity=0;}
+  function hover(node,title,lines){
+    node.addEventListener('mouseenter',e=>showTip(e,title,lines));
+    node.addEventListener('mousemove',moveTip);
+    node.addEventListener('mouseleave',hideTip);
+  }
+  // rounded-end bar path (vertical, round top)
+  function vbar(x,y,w,h,r){r=Math.min(r,h,w/2);return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`;}
+  function hbar(x,y,w,h,r){r=Math.min(r,w,h/2);return `M${x},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h-r}Q${x+w},${y+h} ${x+w-r},${y+h}H${x}Z`;}
+
+  // ---------- Chart A: DEGS1 vertical bars ----------
+  (function(){
+    const data=[
+      {k:'With sleep problems',v:22.1,lo:19.3,hi:25.2},
+      {k:'Without sleep problems',v:7.5,lo:6.6,hi:8.4}
+    ];
+    const W=320,H=220,m={t:22,r:10,b:40,l:34};
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Bar chart: 22.1% vs 7.5% high chronic stress'},document.getElementById('chartA'));
+    const ih=H-m.t-m.b, iw=W-m.l-m.r, max=30;
+    const y=v=>m.t+ih-(v/max)*ih;
+    [0,10,20,30].forEach(t=>{
+      el('line',{x1:m.l,x2:W-m.r,y1:y(t),y2:y(t),stroke:'var(--grid)','stroke-width':1},svg);
+      const tx=el('text',{x:m.l-6,y:y(t)+4,'text-anchor':'end','font-size':11,fill:'var(--text-muted)'},svg);tx.textContent=t+'%';
+    });
+    const band=iw/data.length, bw=32;
+    data.forEach((d,i)=>{
+      const cx=m.l+band*i+band/2, x=cx-bw/2;
+      const g=el('g',{class:'hit'},svg);
+      el('rect',{x:m.l+band*i,y:m.t,width:band,height:ih,fill:'transparent'},g);
+      el('path',{d:vbar(x,y(d.v),bw,y(0)-y(d.v),4),fill:i===0?'var(--series-1)':'var(--text-muted)','fill-opacity':i===0?1:.55},g);
+      const lab=el('text',{x:cx,y:y(d.v)-7,'text-anchor':'middle','font-size':13,'font-weight':600,fill:'var(--text-primary)'},g);lab.textContent=d.v+'%';
+      const kl=el('text',{x:cx,y:H-m.b+16,'text-anchor':'middle','font-size':11,fill:'var(--text-secondary)'},g);kl.textContent=d.k.split(' ')[0];
+      const kl2=el('text',{x:cx,y:H-m.b+30,'text-anchor':'middle','font-size':11,fill:'var(--text-secondary)'},g);kl2.textContent=d.k.split(' ').slice(1).join(' ');
+      hover(g,d.k,[`High chronic stress: ${d.v}%`,`95% CI ${d.lo}–${d.hi}%`,'DEGS1, Hapke et al. (2013)']);
+    });
+    el('line',{x1:m.l,x2:W-m.r,y1:y(0),y2:y(0),stroke:'var(--text-muted)','stroke-width':1},svg);
+    document.getElementById('tA').innerHTML='<tr><th>Group</th><th>% high stress</th><th>95% CI</th></tr>'+data.map(d=>`<tr><td>${d.k}</td><td class="n">${d.v}%</td><td class="n">${d.lo}–${d.hi}</td></tr>`).join('');
+  })();
+
+  // ---------- Chart B: correlations horizontal ----------
+  (function(){
+    const data=[
+      {k:'Sleep quality',v:0.39,n:'25 studies, n = 10,065'},
+      {k:'Insomnia symptoms',v:0.41,n:'12 studies, n ≈ 5,565'}
+    ];
+    const W=320,H=220,m={t:30,r:34,b:34,l:10};
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Pooled correlations r = 0.39 and 0.41'},document.getElementById('chartB'));
+    const iw=W-m.l-m.r, x=v=>m.l+(v/0.6)*iw;
+    const ticks=[{v:0,l:'0'},{v:0.1,l:'0.1 small'},{v:0.3,l:'0.3 medium'},{v:0.5,l:'0.5 large'}];
+    ticks.forEach(t=>{
+      el('line',{x1:x(t.v),x2:x(t.v),y1:m.t-6,y2:H-m.b,stroke:'var(--grid)','stroke-width':1},svg);
+      const tx=el('text',{x:x(t.v),y:H-m.b+16,'text-anchor':t.v===0?'start':'middle','font-size':10.5,fill:'var(--text-muted)'},svg);tx.textContent=t.l;
+    });
+    const bh=24, gap=46;
+    data.forEach((d,i)=>{
+      const yy=m.t+18+i*(bh+gap);
+      const g=el('g',{class:'hit'},svg);
+      el('rect',{x:m.l,y:yy-20,width:iw,height:bh+24,fill:'transparent'},g);
+      const kt=el('text',{x:m.l+6,y:yy-6,'font-size':12,fill:'var(--text-secondary)'},g);kt.textContent=d.k;
+      el('path',{d:hbar(x(0),yy,x(d.v)-x(0),bh,4),fill:'var(--series-1)'},g);
+      const vt=el('text',{x:x(d.v)+6,y:yy+bh/2+4,'font-size':13,'font-weight':600,fill:'var(--text-primary)'},g);vt.textContent='r = '+d.v.toFixed(2);
+      hover(g,d.k+' ↔ stress',['Pooled r = '+d.v.toFixed(2),d.n,'Gardani et al. (2022)']);
+    });
+    el('line',{x1:x(0),x2:x(0),y1:m.t-6,y2:H-m.b,stroke:'var(--text-muted)','stroke-width':1},svg);
+    document.getElementById('tB').innerHTML='<tr><th>Outcome</th><th>Pooled r</th><th>Studies</th></tr>'+data.map(d=>`<tr><td>${d.k}</td><td class="n">${d.v.toFixed(2)}</td><td>${d.n}</td></tr>`).join('');
+  })();
+
+  // ---------- Chart C: forest plot ----------
+  (function(){
+    const data=[
+      {k:'Post-training',c:'vs non-specific control',s:1,v:0.33,lo:0.17,hi:0.48},
+      {k:'Follow-up',c:'vs non-specific control',s:1,v:0.54,lo:0.24,hi:0.84},
+      {k:'Post-training',c:'vs active sleep treatment',s:2,v:0.03,lo:-0.43,hi:0.49},
+      {k:'Follow-up',c:'vs active sleep treatment',s:2,v:-0.14,lo:-0.62,hi:0.34}
+    ];
+    const W=320,H=196,m={t:8,r:12,b:30,l:86};
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Forest plot of mindfulness effect sizes on sleep quality'},document.getElementById('chartC'));
+    const iw=W-m.l-m.r, x=v=>m.l+((v+0.8)/1.8)*iw;
+    [-0.5,0,0.5,1].forEach(t=>{
+      el('line',{x1:x(t),x2:x(t),y1:m.t,y2:H-m.b,stroke:t===0?'var(--text-muted)':'var(--grid)','stroke-width':1},svg);
+      const tx=el('text',{x:x(t),y:H-m.b+15,'text-anchor':'middle','font-size':10.5,fill:'var(--text-muted)'},svg);tx.textContent=t;
+    });
+    const cap=el('text',{x:x(0)+4,y:H-2,'font-size':10,fill:'var(--text-muted)'},svg);cap.textContent='favours mindfulness →';
+    const rowH=(H-m.t-m.b)/data.length;
+    data.forEach((d,i)=>{
+      const yy=m.t+rowH*i+rowH/2;
+      const col=d.s===1?'var(--series-1)':'var(--series-2)';
+      const g=el('g',{class:'hit'},svg);
+      el('rect',{x:0,y:yy-rowH/2,width:W,height:rowH,fill:'transparent'},g);
+      const kt=el('text',{x:m.l-8,y:yy+4,'text-anchor':'end','font-size':11,fill:'var(--text-secondary)'},g);kt.textContent=d.k;
+      el('line',{x1:x(d.lo),x2:x(d.hi),y1:yy,y2:yy,stroke:col,'stroke-width':2,'stroke-linecap':'round'},g);
+      el('circle',{cx:x(d.v),cy:yy,r:5,fill:col,stroke:'var(--surface-1)','stroke-width':2},g);
+      hover(g,`${d.k}, ${d.c}`,[`Effect size ${d.v.toFixed(2)}`,`95% CI ${d.lo.toFixed(2)} to ${d.hi.toFixed(2)}`,'Rusch et al. (2019)']);
+    });
+    document.getElementById('tC').innerHTML='<tr><th>Comparison</th><th>Time</th><th>ES</th><th>95% CI</th></tr>'+data.map(d=>`<tr><td>${d.c}</td><td>${d.k}</td><td class="n">${d.v.toFixed(2)}</td><td class="n">${d.lo.toFixed(2)} to ${d.hi.toFixed(2)}</td></tr>`).join('');
+  })();
+
+  document.querySelectorAll('.toggle-table').forEach(b=>b.addEventListener('click',()=>{
+    const t=document.getElementById(b.dataset.t);t.classList.toggle('show');
+    b.textContent=t.classList.contains('show')?'Hide table':'Show table';
+  }));
+
+  // ---------- Evidence table ----------
+  const RATE={
+    High:{c:'var(--good)',icon:'<svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'},
+    Moderate:{c:'var(--warning)',icon:'<svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 1.8a4.2 4.2 0 010 8.4z" fill="currentColor"/></svg>'},
+    Low:{c:'var(--serious)',icon:'<svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>'},
+    Caution:{c:'var(--critical)',icon:'<svg viewBox="0 0 12 12"><path d="M6 1.5l4.8 8.5H1.2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 5v2.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="6" cy="8.7" r=".8" fill="currentColor"/></svg>'}
+  };
+  const chip=r=>`<span class="chip" style="color:var(--text-primary)"><span style="color:${RATE[r].c};display:inline-flex">${RATE[r].icon}</span>${r}</span>`;
+  const rows=[
+    {rel:'High chronic stress ↔ sleep problems',f:'22.1% of adults with sleep problems have high stress vs 7.5% without (≈3×)',n:'5,685',d:'National survey (cross-sectional)',r:'High',s:'Hapke et al. (2013)'},
+    {rel:'Chronic stress prevalence by sex',f:'High stress in 13.9% of women vs 8.2% of men (11.0% overall)',n:'5,793',d:'National survey (cross-sectional)',r:'High',s:'Hapke et al. (2013)'},
+    {rel:'Chronic stress ↔ depressive symptoms',f:'53.7% of people with depressive symptoms have high stress vs 6.9% without',n:'5,641',d:'National survey (cross-sectional)',r:'High',s:'Hapke et al. (2013)'},
+    {rel:'Perceived stress ↔ sleep quality',f:'Pooled r = 0.39 (moderate)',n:'10,065',d:'Meta-analysis, 25 studies',r:'Moderate',s:'Gardani et al. (2022)'},
+    {rel:'Perceived stress ↔ insomnia symptoms',f:'Pooled r = 0.41 (moderate); high heterogeneity',n:'≈5,565',d:'Meta-analysis, 12 studies',r:'Moderate',s:'Gardani et al. (2022)'},
+    {rel:'Mindfulness vs non-specific control → sleep quality',f:'ES 0.33 (0.17–0.48) post; 0.54 (0.24–0.84) at follow-up',n:'1,654 (18 RCTs)',d:'Meta-analysis of RCTs',r:'Moderate',s:'Rusch et al. (2019)'},
+    {rel:'Mindfulness vs active sleep treatment → sleep quality',f:'ES 0.03 (−0.43 to 0.49); no difference',n:'subset of 18 RCTs',d:'Meta-analysis of RCTs',r:'Low',s:'Rusch et al. (2019)'},
+    {rel:'Evening stress → same-night sleep duration',f:'+1 point stress (0–10) ≈ 3 min shorter sleep; no effect on latency or wake time',n:'326 (2,500+ nights)',d:'Daily intensive longitudinal',r:'Moderate',s:'Yap et al. (2020)'},
+    {rel:'Short sleep → next-day stress',f:'Shorter sleep predicted higher next-day stress (self-report b = −0.15)',n:'326 (2,500+ nights)',d:'Daily intensive longitudinal',r:'Moderate',s:'Yap et al. (2020)'},
+    {rel:'Improving sleep → lower stress',f:'g = 0.42 (small-to-medium); reverse direction of the link',n:'8,608 (65 RCTs)',d:'Meta-analysis of RCTs',r:'Caution',s:'Scott et al. (2021)'},
+    {rel:'Results generalise to all adults',f:'Meta-analysis mostly in university students; correlations ≠ causation',n:'—',d:'Appraisal note',r:'Caution',s:'Gardani et al. (2022)'}
+  ];
+  const fSrc=document.getElementById('fSrc'), fRate=document.getElementById('fRate'), fQ=document.getElementById('fQ');
+  [...new Set(rows.map(r=>r.s))].forEach(s=>{const o=document.createElement('option');o.textContent=s;fSrc.appendChild(o);});
+  function render(){
+    const q=fQ.value.toLowerCase();
+    const list=rows.filter(r=>(!fSrc.value||r.s===fSrc.value)&&(!fRate.value||r.r===fRate.value)&&(!q||(r.rel+r.f+r.d+r.s).toLowerCase().includes(q)));
+    document.getElementById('evBody').innerHTML=list.map(r=>`<tr><td><b>${r.rel}</b></td><td>${r.f}</td><td class="n">${r.n}</td><td>${r.d}</td><td>${chip(r.r)}</td><td>${r.s}</td></tr>`).join('')||'<tr><td colspan="6" style="color:var(--text-muted)">No rows match these filters.</td></tr>';
+    document.getElementById('evCount').textContent=`Showing ${list.length} of ${rows.length} relationships`;
+  }
+  [fSrc,fRate].forEach(e=>e.addEventListener('change',render)); fQ.addEventListener('input',render); render();
+
+  // ---------- Conclusion ----------
+  const concl=[
+    ['High','High stress is consistently linked with poorer sleep, at about 3× the rate in Germany (Hapke et al., 2013; Gardani et al., 2022).'],
+    ['Moderate','Stress-reduction training improves sleep quality by a small-to-moderate amount (Rusch et al., 2019).'],
+    ['Low','No proof that stress training beats other active sleep treatments (Rusch et al., 2019).'],
+    ['Caution','The link is two-way: improving sleep also lowers stress (g = 0.42; Scott et al., 2021). The meta-analysis is mostly students with high heterogeneity (Gardani et al., 2022).']
+  ];
+  document.getElementById('concl').innerHTML=concl.map(c=>`<div class="row"><div>${chip(c[0])}</div><p>${c[1]}</p></div>`).join('');
+})();
+</script>
+</body>
+</html>
